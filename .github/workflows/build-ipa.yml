@@ -1,0 +1,36 @@
+name: Build Unsigned IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build unsigned archive
+        run: |
+          xcodebuild archive \
+            -project Tracky/Tracky.xcodeproj \
+            -scheme Tracky \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/Tracky.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Package as IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/Tracky.xcarchive/Products/Applications/*.app Payload/
+          zip -r Tracky.ipa Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tracky-IPA
+          path: Tracky.ipa
